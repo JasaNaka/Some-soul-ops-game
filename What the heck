@@ -238,7 +238,7 @@ end)
 Speed_Finish.MouseButton1Click:Connect(function()
 
 
-while true do wait(.05)
+while true do wait(1)
 
 sethiddenproperty(game.Players.LocalPlayer, "SimulationRadius", 112412400000)
         sethiddenproperty(game.Players.LocalPlayer, "MaxSimulationRadius", 112412400000)
