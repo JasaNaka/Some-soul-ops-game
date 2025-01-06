@@ -238,16 +238,10 @@ end)
 Speed_Finish.MouseButton1Click:Connect(function()
 
 
-while true do wait(1)
+while true do 
+wait(.05)
+game.Workspace.Present.Position = game.Players.LocalPlayer.Character.Torso.Position
 
-sethiddenproperty(game.Players.LocalPlayer, "SimulationRadius", 112412400000)
-        sethiddenproperty(game.Players.LocalPlayer, "MaxSimulationRadius", 112412400000)
-for i,d in pairs(game:GetService("Workspace"):GetDescendants()) do
-	if d.Name == ("Present") then
- d.Position = game.Players.LocalPlayer.Character.Torso.Position
-		
-		end
-	end
 end
 
 
