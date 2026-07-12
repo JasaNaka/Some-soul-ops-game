@@ -1,0 +1,385 @@
+local Players = game:GetService("Players")
+local HttpService = game:GetService("HttpService")
+local TeleportService = game:GetService("TeleportService")
+local CoreGui = game:GetService("CoreGui")
+local TweenService = game:GetService("TweenService")
+local localPlayer = Players.LocalPlayer
+
+-- =========================================================================
+-- some retard come here and ban you
+-- =========================================================================
+local adminList = {
+    ["1mDito"] = true,
+    ["FancyJurple"] = true,
+    ["God404"] = true,
+    ["SadGoldyPuppetAlt"] = true,
+    ["toneman521"] = true,
+    ["Othertd"] = true,
+}
+
+local validSouls = {
+    ["DeathSoul"] = true,
+    ["Soul"] = true,
+    ["OPSoul"] = true,
+    ["GigaSoul"] = true,
+    ["RainbowSoul"] = true
+}
+
+-- Cấu hình điều kiện Whitelist Souls cho từng khu vực
+local areaWhitelist = {
+    ["SoulsSpawn2"] = 100000,
+    ["SoulsSpawnE"] = 250000,
+    ["SoulsSpawn4"] = 750000,
+    ["SoulsSpawn5"] = 1250000,
+}
+
+local secretLocation = Vector3.new(50000, 25000, 50000)
+local isScriptEnabled = true 
+
+-- =========================================================================
+-- script gui
+-- =========================================================================
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "SoulFarmGUI"
+ScreenGui.ResetOnSpawn = false
+
+pcall(function() ScreenGui.Parent = CoreGui end)
+if not ScreenGui.Parent then ScreenGui.Parent = localPlayer:WaitForChild("PlayerGui") end
+
+-- Khung chính (Main Frame)
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 280, 0, 220)
+MainFrame.Position = UDim2.new(0.05, 0, 0.3, 0)
+MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true 
+MainFrame.ZIndex = 2 -- Giữ MainFrame nằm trên InfoPanel khi thu gọn
+MainFrame.Parent = ScreenGui
+
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 8)
+UICorner.Parent = MainFrame
+
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, 0, 0, 35)
+Title.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+Title.Text = "SGR Auto Farm Script"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 14
+Title.ZIndex = 2
+Title.Parent = MainFrame
+
+local TitleCorner = Instance.new("UICorner")
+TitleCorner.CornerRadius = UDim.new(0, 8)
+TitleCorner.Parent = Title
+
+local StatusLabel = Instance.new("TextLabel")
+StatusLabel.Size = UDim2.new(0.9, 0, 0, 30)
+StatusLabel.Position = UDim2.new(0.05, 0, 0.18, 0)
+StatusLabel.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+StatusLabel.Text = "Status: Initializing..."
+StatusLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+StatusLabel.Font = Enum.Font.GothamSemibold
+StatusLabel.TextSize = 13
+StatusLabel.ZIndex = 2
+StatusLabel.Parent = MainFrame
+
+local StatusCorner = Instance.new("UICorner")
+StatusCorner.CornerRadius = UDim.new(0, 6)
+StatusCorner.Parent = StatusLabel
+
+-- toggle button
+local ToggleBtn = Instance.new("TextButton")
+ToggleBtn.Size = UDim2.new(0.62, 0, 0, 35)
+ToggleBtn.Position = UDim2.new(0.05, 0, 0.35, 0)
+ToggleBtn.BackgroundColor3 = Color3.fromRGB(46, 204, 113) 
+ToggleBtn.Text = "HACK: ENABLED"
+ToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+ToggleBtn.Font = Enum.Font.GothamBold
+ToggleBtn.TextSize = 12
+ToggleBtn.ZIndex = 2
+ToggleBtn.Parent = MainFrame
+
+local BtnCorner = Instance.new("UICorner")
+BtnCorner.CornerRadius = UDim.new(0, 6)
+BtnCorner.Parent = ToggleBtn
+
+-- info
+local InfoBtn = Instance.new("TextButton")
+InfoBtn.Size = UDim2.new(0.25, 0, 0, 35)
+InfoBtn.Position = UDim2.new(0.7, 0, 0.35, 0)
+InfoBtn.BackgroundColor3 = Color3.fromRGB(41, 128, 185) -- Màu xanh dương dương độc lập
+InfoBtn.Text = "ℹ️ INFO"
+InfoBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+InfoBtn.Font = Enum.Font.GothamBold
+InfoBtn.TextSize = 12
+InfoBtn.ZIndex = 2
+InfoBtn.Parent = MainFrame
+
+local InfoBtnCorner = Instance.new("UICorner")
+InfoBtnCorner.CornerRadius = UDim.new(0, 6)
+InfoBtnCorner.Parent = InfoBtn
+
+local LogBox = Instance.new("TextLabel")
+LogBox.Size = UDim2.new(0.9, 0, 0, 75)
+LogBox.Position = UDim2.new(0.05, 0, 0.55, 0)
+LogBox.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+LogBox.Text = "[SYSTEM] Script loaded successfully.\n[SYSTEM] Waiting for loop..."
+LogBox.TextColor3 = Color3.fromRGB(230, 230, 230)
+LogBox.Font = Enum.Font.Code
+LogBox.TextSize = 11
+LogBox.TextXAlignment = Enum.TextXAlignment.Left
+LogBox.TextYAlignment = Enum.TextYAlignment.Top
+LogBox.ClipsDescendants = true
+LogBox.ZIndex = 2
+LogBox.Parent = MainFrame
+
+local LogCorner = Instance.new("UICorner")
+LogCorner.CornerRadius = UDim.new(0, 6)
+LogCorner.Parent = LogBox
+
+-- gui checking souls
+local InfoPanel = Instance.new("Frame")
+InfoPanel.Size = UDim2.new(0, 280, 0, 150)
+InfoPanel.Position = UDim2.new(0, 0, 0.3, 0) -- Vị trí ban đầu giấu sau MainFrame
+InfoPanel.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+InfoPanel.BorderSizePixel = 0
+InfoPanel.ZIndex = 1 -- Nằm dưới để tạo hiệu ứng trượt rớt ra ngoài
+InfoPanel.Parent = MainFrame
+
+local PanelCorner = Instance.new("UICorner")
+PanelCorner.CornerRadius = UDim.new(0, 8)
+PanelCorner.Parent = InfoPanel
+
+local InfoText = Instance.new("TextLabel")
+InfoText.Size = UDim2.new(0.92, 0, 0.9, 0)
+InfoText.Position = UDim2.new(0.04, 0, 0.05, 0)
+InfoText.BackgroundTransparency = 1
+InfoText.Text = " FEATURES LIST:\n" ..
+                "• Auto Farm Souls (Super Fast TP)\n" ..
+                "• Dynamic Whitelist System via Leaderstats\n" ..
+                "• Souls Required: S2:100k | SE:250k | S4:750k | S5:1.25M\n" ..
+                "• Real-time Safe Anti-Cheat Bypass\n" ..
+                "• Admin Anti-Ban Detector & Instant ServerHop\n" ..
+                "• Orbit Safe Base Construction (50k Studs)"
+InfoText.TextColor3 = Color3.fromRGB(220, 220, 220)
+InfoText.Font = Enum.Font.GothamSemibold
+InfoText.TextSize = 11
+InfoText.TextXAlignment = Enum.TextXAlignment.Left
+InfoText.TextYAlignment = Enum.TextYAlignment.Top
+InfoText.ZIndex = 1
+InfoText.Parent = InfoPanel
+
+
+local isPanelOpen = false
+InfoBtn.MouseButton1Click:Connect(function()
+    isPanelOpen = not isPanelOpen
+    local targetPos = isPanelOpen and UDim2.new(0, 0, 0.95, 0) or UDim2.new(0, 0, 0.3, 0)
+    
+    TweenService:Create(InfoPanel, TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+        Position = targetPos
+    }):Play()
+end)
+
+-- Hàm cập nhật Log nhanh lên GUI
+local function setLog(text, isWarning)
+    LogBox.Text = text
+    if isWarning then
+        LogBox.TextColor3 = Color3.fromRGB(231, 76, 60) 
+    else
+        LogBox.TextColor3 = Color3.fromRGB(230, 230, 230) 
+    end
+end
+
+-- heh
+ToggleBtn.MouseButton1Click:Connect(function()
+    isScriptEnabled = not isScriptEnabled
+    if isScriptEnabled then
+        ToggleBtn.BackgroundColor3 = Color3.fromRGB(46, 204, 113)
+        ToggleBtn.Text = "HACK: ENABLED"
+        StatusLabel.Text = "Status: Resuming loop..."
+        setLog("[SYSTEM] Script activated by user.")
+    else
+        ToggleBtn.BackgroundColor3 = Color3.fromRGB(231, 76, 60)
+        ToggleBtn.Text = "HACK: DISABLED"
+        StatusLabel.Text = "Status: Script Paused"
+        setLog("[SYSTEM] Script deactivated by user.", true)
+    end
+end)
+
+-- =========================================================================
+Logic
+-- =========================================================================
+
+local function getCurrentSouls()
+    local leaderstats = localPlayer:FindFirstChild("leaderstats")
+    local soulsValue = leaderstats and leaderstats:FindFirstChild("Souls")
+    return soulsValue and soulsValue.Value or 0
+end
+
+local function serverHop()
+    StatusLabel.Text = "Status: Serverhopping..."
+    setLog("[SERVER HOP] Finding a safe public server...")
+    local placeId = game.PlaceId
+    local url = "https://games.roblox.com/v1/games/" .. placeId .. "/servers/Public?sortOrder=Asc&limit=100"
+    local success, result = pcall(function()
+        return HttpService:JSONDecode(game:HttpGet(url))
+    end)
+    
+    if success and result and result.data then
+        local serverList = {}
+        for _, server in ipairs(result.data) do
+            if server.playing < server.maxPlayers and server.id ~= game.JobId then
+                table.insert(serverList, server.id)
+            end
+        end
+        
+        if #serverList > 0 then
+            local randomServerId = serverList[math.random(1, #serverList)]
+            pcall(function()
+                TeleportService:TeleportToPlaceInstance(placeId, randomServerId, localPlayer)
+            end)
+        end
+    end
+    task.wait(10)
+end
+
+local function checkAdmin(player)
+    if adminList[player.Name] then
+        StatusLabel.Text = "Status: EVADING ADMIN!"
+        setLog("[WARNING] Admin " .. player.Name .. " joined! Serverhopping instantly...", true)
+        warn("Warning: Admin " .. player.Name .. " has joined! Serverhopping...")
+        serverHop()
+    end
+end
+
+for _, player in ipairs(Players:GetPlayers()) do checkAdmin(player) end
+Players.PlayerAdded:Connect(checkAdmin)
+
+-- Khởi tạo vị trí vũ trụ an toàn
+task.spawn(function()
+    pcall(function() workspace.FallenPartsDestroyHeight = -999999999 end)
+    
+    local basePlate = Instance.new("Part")
+    basePlate.Size = Vector3.new(30, 1, 30)
+    basePlate.Position = secretLocation
+    basePlate.Anchored = true
+    basePlate.BrickColor = BrickColor.new("Dark stone grey")
+    basePlate.Parent = workspace
+
+    local spawnPoint = Instance.new("SpawnLocation")
+    spawnPoint.Size = Vector3.new(6, 1, 6)
+    spawnPoint.Position = secretLocation + Vector3.new(0, 1, 0)
+    spawnPoint.Anchored = true
+    spawnPoint.Duration = 0 
+    spawnPoint.Visible = false 
+    spawnPoint.Parent = workspace
+    setLog("[INIT] Secret Base created at 50k studs.")
+end)
+
+-- delete anto cheat
+task.spawn(function()
+    local vipFolder = workspace:WaitForChild("VIP", 5)
+    if vipFolder then
+        local antiCheat = vipFolder:WaitForChild("AntiCheat", 3)
+        if antiCheat then 
+            antiCheat:Destroy() 
+            setLog("[BYPASS] VIP AntiCheat completely destroyed!")
+        end
+    end
+end)
+
+-- loop autofarm
+while true do
+    task.wait(0.5)
+    
+    if not isScriptEnabled then 
+        continue 
+    end
+    
+    local character = localPlayer.Character
+    local rootPart = character and character:FindFirstChild("HumanoidRootPart")
+    local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+    
+    local soulFoundThisRound = false
+    local currentSouls = getCurrentSouls()
+    
+    if rootPart and humanoid and humanoid.Health > 0 then
+        local targetFolders = {}
+        
+        for areaName, requiredSouls in pairs(areaWhitelist) do
+            if currentSouls >= requiredSouls then
+                local folder = workspace:FindFirstChild(areaName)
+                if folder then 
+                    table.insert(targetFolders, folder) 
+                end
+            end
+        end
+        
+        local vipFolder = workspace:FindFirstChild("VIP")
+        local vipSouls = vipFolder and vipFolder:FindFirstChild("VIP Souls")
+        if vipSouls then table.insert(targetFolders, vipSouls) end
+        
+        for _, folder in ipairs(targetFolders) do
+            for _, object in pairs(folder:GetChildren()) do
+                if not isScriptEnabled or humanoid.Health <= 0 then break end
+                
+                if validSouls[object.Name] and object:IsA("BasePart") then
+                    soulFoundThisRound = true
+                    StatusLabel.Text = "Status: Harvesting Souls..."
+                    setLog("[FARMING] Teleporting to: " .. object.Name)
+                    
+                    local originalCFrame = rootPart.CFrame
+                    rootPart.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+                    
+                    rootPart.CFrame = object.CFrame
+                    task.wait(0.02) 
+                    
+                    rootPart.CFrame = CFrame.new(secretLocation + Vector3.new(0, 3, 0))
+                    
+                    rootPart.Anchored = true
+                    task.wait(0.01)
+                    rootPart.Anchored = false 
+                    
+                    rootPart.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+                    rootPart.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
+                    
+                    task.wait(0.3)
+                end
+            end
+        end
+    end
+    
+    if not soulFoundThisRound and isScriptEnabled then
+        StatusLabel.Text = "Status: Checking Map..."
+        task.wait(2)
+        local doubleCheck = false
+        
+        for areaName, requiredSouls in pairs(areaWhitelist) do
+            if currentSouls >= requiredSouls then
+                local folder = workspace:FindFirstChild(areaName)
+                if folder then
+                    for _, object in pairs(folder:GetChildren()) do
+                        if validSouls[object.Name] then doubleCheck = true end
+                    end
+                end
+            end
+        end
+        
+        local vipFolder = workspace:FindFirstChild("VIP")
+        local vipSouls = vipFolder and vipFolder:FindFirstChild("VIP Souls")
+        if vipSouls then
+            for _, object in pairs(vipSouls:GetChildren()) do
+                if validSouls[object.Name] then doubleCheck = true end
+            end
+        end
+        
+        if not doubleCheck and isScriptEnabled then
+            StatusLabel.Text = "Status: Map Clear!"
+            setLog("[STATUS] No souls left in unlocked areas. Hop!")
+            serverHop() 
+        end
+    end
+end
