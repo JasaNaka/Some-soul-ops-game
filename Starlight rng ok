@@ -1,0 +1,390 @@
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local RunService = game:GetService("RunService")
+local VirtualInputManager = game:GetService("VirtualInputManager")
+
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+-- 1. TẠO GUI
+local gui = Instance.new("ScreenGui")
+gui.Name = "CustomWeaponFarmGui"
+gui.ResetOnSpawn = false
+gui.Parent = playerGui
+
+local mainFrame = Instance.new("Frame")
+mainFrame.Name = "MainFrame"
+mainFrame.Size = UDim2.new(0, 320, 0, 310)
+mainFrame.Position = UDim2.new(0.5, -160, 0.5, -155)
+mainFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+mainFrame.BorderSizePixel = 0
+mainFrame.Active = true
+mainFrame.Draggable = true
+mainFrame.Parent = gui
+
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 8)
+corner.Parent = mainFrame
+
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, 0, 0, 40)
+title.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+title.Text = "AUTO FARM - TUỲ CHỈNH WEAPON"
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.TextSize = 14
+title.Font = Enum.Font.SourceSansBold
+title.Parent = mainFrame
+
+-- NÚT X ĐÓNG GUI
+local closeButton = Instance.new("TextButton")
+closeButton.Name = "CloseButton"
+closeButton.Size = UDim2.new(0, 28, 0, 28)
+closeButton.Position = UDim2.new(1, -34, 0, 6)
+closeButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+closeButton.Text = "X"
+closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+closeButton.Font = Enum.Font.SourceSansBold
+closeButton.TextSize = 16
+closeButton.Parent = mainFrame
+
+local closeCorner = Instance.new("UICorner")
+closeCorner.CornerRadius = UDim.new(0, 6)
+closeCorner.Parent = closeButton
+
+closeButton.MouseButton1Click:Connect(function()
+	gui:Destroy()
+end)
+
+-- Ô NHẬP WEAPON 1
+local weapon1Label = Instance.new("TextLabel")
+weapon1Label.Size = UDim2.new(0.35, 0, 0, 30)
+weapon1Label.Position = UDim2.new(0.05, 0, 0.16, 0)
+weapon1Label.BackgroundTransparency = 1
+weapon1Label.Text = "Weapon 1:"
+weapon1Label.TextColor3 = Color3.fromRGB(200, 200, 200)
+weapon1Label.Font = Enum.Font.SourceSansBold
+weapon1Label.TextSize = 14
+weapon1Label.TextXAlignment = Enum.TextXAlignment.Left
+weapon1Label.Parent = mainFrame
+
+local weapon1Box = Instance.new("TextBox")
+weapon1Box.Size = UDim2.new(0.55, 0, 0, 30)
+weapon1Box.Position = UDim2.new(0.4, 0, 0.16, 0)
+weapon1Box.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
+weapon1Box.Text = "Thousand SOULs Axe"
+weapon1Box.TextColor3 = Color3.fromRGB(255, 255, 255)
+weapon1Box.Font = Enum.Font.SourceSans
+weapon1Box.TextSize = 13
+weapon1Box.Parent = mainFrame
+
+-- Ô NHẬP WEAPON 2
+local weapon2Label = Instance.new("TextLabel")
+weapon2Label.Size = UDim2.new(0.35, 0, 0, 30)
+weapon2Label.Position = UDim2.new(0.05, 0, 0.28, 0)
+weapon2Label.BackgroundTransparency = 1
+weapon2Label.Text = "Weapon 2:"
+weapon2Label.TextColor3 = Color3.fromRGB(200, 200, 200)
+weapon2Label.Font = Enum.Font.SourceSansBold
+weapon2Label.TextSize = 14
+weapon2Label.TextXAlignment = Enum.TextXAlignment.Left
+weapon2Label.Parent = mainFrame
+
+local weapon2Box = Instance.new("TextBox")
+weapon2Box.Size = UDim2.new(0.55, 0, 0, 30)
+weapon2Box.Position = UDim2.new(0.4, 0, 0.28, 0)
+weapon2Box.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
+weapon2Box.Text = "Reaper's Scythes"
+weapon2Box.TextColor3 = Color3.fromRGB(255, 255, 255)
+weapon2Box.Font = Enum.Font.SourceSans
+weapon2Box.TextSize = 13
+weapon2Box.Parent = mainFrame
+
+-- Ô NHẬP ĐỘ CAO
+local heightLabel = Instance.new("TextLabel")
+heightLabel.Size = UDim2.new(0.35, 0, 0, 30)
+heightLabel.Position = UDim2.new(0.05, 0, 0.4, 0)
+heightLabel.BackgroundTransparency = 1
+heightLabel.Text = "Độ cao:"
+heightLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+heightLabel.Font = Enum.Font.SourceSansBold
+heightLabel.TextSize = 14
+heightLabel.TextXAlignment = Enum.TextXAlignment.Left
+heightLabel.Parent = mainFrame
+
+local heightBox = Instance.new("TextBox")
+heightBox.Size = UDim2.new(0.55, 0, 0, 30)
+heightBox.Position = UDim2.new(0.4, 0, 0.4, 0)
+heightBox.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
+heightBox.Text = "4"
+heightBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+heightBox.Font = Enum.Font.SourceSans
+heightBox.TextSize = 14
+heightBox.Parent = mainFrame
+
+-- TRẠNG THÁI HIỂN THỊ TOOL
+local currentToolLabel = Instance.new("TextLabel")
+currentToolLabel.Size = UDim2.new(0.9, 0, 0, 25)
+currentToolLabel.Position = UDim2.new(0.05, 0, 0.54, 0)
+currentToolLabel.BackgroundTransparency = 1
+currentToolLabel.Text = "Trạng thái: Chưa bật"
+currentToolLabel.TextColor3 = Color3.fromRGB(255, 220, 100)
+currentToolLabel.Font = Enum.Font.SourceSansBold
+currentToolLabel.TextSize = 13
+currentToolLabel.Parent = mainFrame
+
+-- NÚT BẬT/TẮT FARM
+local tpButton = Instance.new("TextButton")
+tpButton.Size = UDim2.new(0.9, 0, 0, 42)
+tpButton.Position = UDim2.new(0.05, 0, 0.78, 0)
+tpButton.BackgroundColor3 = Color3.fromRGB(0, 170, 127)
+tpButton.Text = "BẬT AUTO FARM + COMBO"
+tpButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+tpButton.Font = Enum.Font.SourceSansBold
+tpButton.TextSize = 15
+tpButton.Parent = mainFrame
+
+-- 2. LOGIC TÌM QUÁI & XỬ LÝ WEAPON
+local isFarming = false
+local currentTarget = nil
+
+-- TỰ ĐỘNG BẬT LẠI NOCLIP KHI RESPAWN
+player.CharacterAdded:Connect(function(newCharacter)
+	if isFarming then
+		task.wait(1) -- Chờ character load đầy đủ
+		if newCharacter then
+			for _, part in ipairs(newCharacter:GetDescendants()) do
+				if part:IsA("BasePart") then
+					part.CanCollide = false
+				end
+			end
+		end
+	end
+end)
+
+local function getEnemyContainer()
+	local targetFilter = Workspace:FindFirstChild("TargetFilter")
+	if targetFilter then
+		return targetFilter:FindFirstChild("Enemy")
+	end
+	return nil
+end
+
+local function getClosestEnemy()
+	local character = player.Character
+	if not character or not character:FindFirstChild("HumanoidRootPart") then return nil end
+	local hrp = character.HumanoidRootPart
+
+	local enemyGroup = getEnemyContainer()
+	if not enemyGroup then return nil end
+
+	local closest = nil
+	local shortestDistance = math.huge
+
+	for _, child in ipairs(enemyGroup:GetChildren()) do
+		if child:IsA("Model") then
+			local valuesFolder = child:FindFirstChild("Values")
+			local hpValue = valuesFolder and valuesFolder:FindFirstChild("HP")
+			
+			if not hpValue or hpValue.Value > 0 then
+				local enemyPart = child.PrimaryPart or child:FindFirstChild("HumanoidRootPart") or child:FindFirstChildWhichIsA("BasePart")
+				if enemyPart then
+					local distance = (hrp.Position - enemyPart.Position).Magnitude
+					if distance < shortestDistance then
+						closest = child
+						shortestDistance = distance
+					end
+				end
+			end
+		end
+	end
+	return closest
+end
+
+-- GIẢ LẬP NHẤN PHÍM ZXC
+local function pressKey(keyCode)
+	VirtualInputManager:SendKeyEvent(true, keyCode, false, game)
+	task.wait(0.05)
+	VirtualInputManager:SendKeyEvent(false, keyCode, false, game)
+end
+
+-- TRANG BỊ TOOL THEO TÊN (HỖ TRỢ TỰ EQUIP LẠI KHI RESPAWN / MỚI CHẾT XONG)
+local function equipTool(toolName)
+	if not toolName or toolName == "" then return nil end
+	local character = player.Character
+	if not character then return nil end
+	local humanoid = character:FindFirstChildWhichIsA("Humanoid")
+	if not humanoid or humanoid.Health <= 0 then return nil end
+
+	local backpack = player:FindFirstChild("Backpack")
+
+	-- Kiểm tra nếu đã cầm đúng tool trên tay
+	local currentTool = character:FindFirstChildOfClass("Tool")
+	if currentTool and currentTool.Name:lower() == toolName:lower() then
+		return currentTool
+	end
+
+	-- Tìm trong Backpack để cầm ra
+	if backpack then
+		for _, tool in ipairs(backpack:GetChildren()) do
+			if tool:IsA("Tool") and tool.Name:lower() == toolName:lower() then
+				humanoid:EquipTool(tool)
+				return tool
+			end
+		end
+	end
+	return nil
+end
+
+-- LUỒNG COMBO ZXC VÀ SPAM M1 (TỰ ĐỘNG EQUIP KHI CHẾT DÙNG LẠI)
+task.spawn(function()
+	local weaponToggle = false
+	local keys = {Enum.KeyCode.Z, Enum.KeyCode.X, Enum.KeyCode.C}
+
+	while true do
+		if isFarming then
+			local character = player.Character
+			local humanoid = character and character:FindFirstChildWhichIsA("Humanoid")
+
+			-- Nếu nhân vật đang sống mới thực hiện Equip & Đánh
+			if humanoid and humanoid.Health > 0 then
+				if not currentTarget then
+					currentTarget = getClosestEnemy()
+				end
+
+				local w1 = weapon1Box.Text:match("^%s*(.-)%s*$")
+				local w2 = weapon2Box.Text:match("^%s*(.-)%s*$")
+				
+				local currentWeaponName = weaponToggle and w2 or w1
+				
+				if currentWeaponName and currentWeaponName ~= "" then
+					currentToolLabel.Text = "Đang dùng: " .. currentWeaponName
+					local tool = equipTool(currentWeaponName)
+
+					if tool then
+						-- 1. Bấm phím kỹ năng Z, X, C
+						for _, key in ipairs(keys) do
+							if not isFarming then break end
+							pressKey(key)
+							task.wait(0.2)
+						end
+
+						-- 2. Spam M1 liên tục 5s
+						local startTime = tick()
+						while (tick() - startTime) < 5 do
+							if not isFarming then break end
+							-- Đảm bảo tool vẫn cầm trên tay (nếu cất tự cầm lại)
+							if not character:FindFirstChild(tool.Name) then
+								equipTool(currentWeaponName)
+							end
+							
+							tool:Activate()
+							task.wait(0.1)
+						end
+
+						-- 3. Đổi lượt cho Weapon tiếp theo
+						weaponToggle = not weaponToggle
+					else
+						currentToolLabel.Text = "Đang tìm lại Tool: " .. currentWeaponName
+						task.wait(0.5)
+					end
+				else
+					currentToolLabel.Text = "Chưa nhập tên Weapon!"
+					task.wait(0.5)
+				end
+			else
+				currentToolLabel.Text = "Chờ hồi sinh..."
+				task.wait(1)
+			end
+		else
+			task.wait(0.5)
+		end
+	end
+end)
+
+-- VÒNG LẶP KHÓA VỊ TRÍ ÚP MẶT XUỐNG BOSS (TỰ ĐỘNG CHỜ HỒI SINH)
+RunService.Heartbeat:Connect(function()
+	if not isFarming then return end
+
+	local character = player.Character
+	if not character then return end
+	local hrp = character:FindFirstChild("HumanoidRootPart")
+	local humanoid = character:FindFirstChildWhichIsA("Humanoid")
+	
+	-- Nếu chết thì tạm dừng teleport cho tới khi respawn
+	if not hrp or not humanoid or humanoid.Health <= 0 then return end
+
+	humanoid.AutoRotate = false
+	humanoid.PlatformStand = true
+
+	local isAlive = true
+	if currentTarget then
+		local valuesFolder = currentTarget:FindFirstChild("Values")
+		local hpValue = valuesFolder and valuesFolder:FindFirstChild("HP")
+		if not currentTarget.Parent or (hpValue and hpValue.Value <= 0) then
+			isAlive = false
+		end
+	else
+		isAlive = false
+	end
+
+	if not isAlive then
+		currentTarget = getClosestEnemy()
+	end
+
+	if currentTarget then
+		local enemyPart = currentTarget.PrimaryPart 
+			or currentTarget:FindFirstChild("HumanoidRootPart") 
+			or currentTarget:FindFirstChildWhichIsA("BasePart")
+			
+		if enemyPart then
+			local heightOffset = tonumber(heightBox.Text) or 4
+			local myPosition = enemyPart.Position + Vector3.new(0, heightOffset, 0)
+			
+			-- Hướng mặt úp thẳng xuống Boss chuẩn xác
+			hrp.CFrame = CFrame.lookAt(myPosition, enemyPart.Position, Vector3.new(0, 0, 1))
+			
+			-- Triệt tiêu lực vật lý
+			hrp.AssemblyLinearVelocity = Vector3.zero
+			hrp.AssemblyAngularVelocity = Vector3.zero
+		end
+	end
+end)
+
+-- NÚT BẬT / TẮT HACK
+tpButton.MouseButton1Click:Connect(function()
+	isFarming = not isFarming
+	local character = player.Character
+	local humanoid = character and character:FindFirstChildWhichIsA("Humanoid")
+
+	if isFarming then
+		tpButton.Text = "TẮT AUTO FARM"
+		tpButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+		
+		if character then
+			for _, part in ipairs(character:GetDescendants()) do
+				if part:IsA("BasePart") then
+					part.CanCollide = false
+				end
+			end
+		end
+		currentTarget = getClosestEnemy()
+	else
+		tpButton.Text = "BẬT AUTO FARM + COMBO"
+		tpButton.BackgroundColor3 = Color3.fromRGB(0, 170, 127)
+		currentToolLabel.Text = "Trạng thái: Đã tắt"
+		
+		if humanoid then
+			humanoid.AutoRotate = true
+			humanoid.PlatformStand = false
+		end
+
+		if character then
+			for _, part in ipairs(character:GetDescendants()) do
+				if part:IsA("BasePart") then
+					part.CanCollide = true
+				end
+			end
+		end
+		currentTarget = nil
+	end
+end)
