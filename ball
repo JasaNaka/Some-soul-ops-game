@@ -1,0 +1,26 @@
+local Ball = Instance.new("Part",game.Workspace) -- ball
+		Ball.Anchored = true
+		Ball.CFrame = game.Workspace.yourparttospawntheball.CFrame
+		Ball.CastShadow = false
+		Ball.CanCollide = false
+		Ball.CanQuery = false
+		Ball.Material = Enum.Material.ForceField
+		Ball.Shape = ("Ball")
+		Ball.Color = Color3.fromRGB(255, 0, 0)
+		Ball.Size = Vector3.new(0.01,0.01,0.01)
+		task.wait(3)
+		task.spawn(function()
+			task.wait(1)
+			game.Lighting.ClockTime = 0
+			game.Lighting.OutdoorAmbient = Color3.fromRGB(255, 0, 0)
+			game.Lighting.FogColor = Color3.fromRGB(255, 0, 0)
+			game.Lighting.FogEnd = 2000
+				end
+			end
+		end)
+		System.Sounds.TimeStop:Play() -- the timestop sound lol if u remember 
+		for i=1,75 do
+			Ball.Size += Vector3.new(2048/75,2048/75,2048/75)
+			task.wait()
+		end
+		Ball:Destroy()
