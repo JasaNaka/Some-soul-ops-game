@@ -1,30 +1,49 @@
 local bossesFolder = workspace:WaitForChild("Bosses")
 
 local function protectBoss(bossModel)
-	local bossHumanoid = bossModel:WaitForChild("Boss", 5) or bossModel:FindFirstChildOfClass("Humanoid")
+	local bossHum = bossModel:WaitForChild("Boss", 5) or bossModel:FindFirstChildOfClass("Humanoid")
 	local rootPart = bossModel:FindFirstChild("HumanoidRootPart") or bossModel.PrimaryPart
 	
-	if not bossHumanoid or not rootPart then return end
+	if not bossHum or not rootPart then return end
 
-	-- anti movement/teleport
+	-- NetOwner to Server (No TP/Fly exploit)
 	rootPart:SetNetworkOwner(nil)
-	bossHumanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
-	bossHumanoid:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, false)
 
-	-- antilag
-	local connection
-	connection = bossModel.AncestryChanged:Connect(function(_, parent)
-		if not parent then
-			connection:Disconnect()
-			connection = nil
+	-- No Ragdoll/Falling state
+	bossHum:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
+	bossHum:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, false)
+
+	-- Cache default stats
+	local defaultSpeed = bossHum.WalkSpeed
+	local serverHP = bossHum.Health
+
+	-- Lock WalkSpeed
+	bossHum:GetPropertyChangedSignal("WalkSpeed"):Connect(function()
+		if bossHum.WalkSpeed ~= defaultSpeed and not bossModel:GetAttribute("ServerChangingSpeed") then
+			bossHum.WalkSpeed = defaultSpeed
+			warn("[AC] Tamper Speed: " .. bossModel.Name)
 		end
 	end)
 
-	warn("[Anti-Cheat] Secured: " .. bossModel.Name)
+	-- Lock HP & Sync
+	bossHum.HealthChanged:Connect(function(newHP)
+		if bossModel:GetAttribute("ServerDealingDamage") then
+			serverHP = newHP
+		elseif newHP < serverHP then
+			bossHum.Health = serverHP
+			warn("[AC] Tamper HP: " .. bossModel.Name)
+		else
+			serverHP = newHP
+		end
+	end)
+	
+	warn("[AC] Secured: " .. bossModel.Name)
 end
 
+-- Init existing bosses
 for _, boss in ipairs(bossesFolder:GetChildren()) do
 	protectBoss(boss)
 end
 
+-- Auto secure spawned bosses
 bossesFolder.ChildAdded:Connect(protectBoss)
