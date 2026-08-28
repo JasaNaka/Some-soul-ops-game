@@ -1,51 +1,30 @@
--- put this in serverscriptservice
-local CollectionService = game:GetService("CollectionService")
-local bossesFolder = workspace:WaitForChild("Bosses") -- this folder contain all boss model. You can change this
+local bossesFolder = workspace:WaitForChild("Bosses")
 
--- Function to automatically apply security rules to any Boss
 local function protectBoss(bossModel)
 	local bossHumanoid = bossModel:WaitForChild("Boss", 5) or bossModel:FindFirstChildOfClass("Humanoid")
 	local rootPart = bossModel:FindFirstChild("HumanoidRootPart") or bossModel.PrimaryPart
 	
 	if not bossHumanoid or not rootPart then return end
 
-	-- 1. Lock Network Owner to the Server
+	-- anti movement/teleport
 	rootPart:SetNetworkOwner(nil)
-
-	-- 2. Disable falling and ragdoll states to the bosses
 	bossHumanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
 	bossHumanoid:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, false)
 
-	-- 3. Automatically cache default hp & walkspeed for this specific Boss
-	local SERVER_HEALTH = bossHumanoid.MaxHealth
-	local DEFAULT_WALKSPEED = bossHumanoid.WalkSpeed
-
-	-- Lock WalkSpeed modifications from Client
-	bossHumanoid:GetPropertyChangedSignal("WalkSpeed"):Connect(function()
-		if bossHumanoid.WalkSpeed ~= DEFAULT_WALKSPEED and not bossModel:GetAttribute("ServerChangingSpeed") then
-			bossHumanoid.WalkSpeed = DEFAULT_WALKSPEED
-			warn("Detected unauthorized walkspeed change on: " .. bossModel.Name)
+	-- antilag
+	local connection
+	connection = bossModel.AncestryChanged:Connect(function(_, parent)
+		if not parent then
+			connection:Disconnect()
+			connection = nil
 		end
 	end)
 
-	-- Lock Health modifications and prevent collapse/ragdoll
-	bossHumanoid.HealthChanged:Connect(function(newHealth)
-		if newHealth < SERVER_HEALTH and not bossModel:GetAttribute("ServerDealingDamage") then
-			bossHumanoid.Health = SERVER_HEALTH
-			bossHumanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
-			warn("Detected Client tampering with health on: " .. bossModel.Name)
-		end
-	end)
-	
-	print("Successfully secured Boss: " .. bossModel.Name)
+	warn("[Anti-Cheat] Secured: " .. bossModel.Name)
 end
 
--- Automatically apply security to all existing Bosses inside the Folder
 for _, boss in ipairs(bossesFolder:GetChildren()) do
 	protectBoss(boss)
 end
 
--- automatic secure any newly spawned bosses
-bossesFolder.ChildAdded:Connect(function(newBoss)
-	protectBoss(newBoss)
-end)
+bossesFolder.ChildAdded:Connect(protectBoss)
